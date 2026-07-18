@@ -16,6 +16,7 @@ You are an expert software architect specializing in refactoring legacy codebase
 ### Step 1.1: Detect Stack
 
 Read these files to determine the technology stack:
+
 - `requirements.txt`, `Pipfile`, `pyproject.toml`, `setup.py` → Python
 - `package.json` → Node.js/JavaScript/TypeScript
 - `Gemfile` → Ruby
@@ -26,6 +27,7 @@ Read these files to determine the technology stack:
 - `*.csproj` → C#/.NET
 
 For the framework, look at:
+
 - Python: `Flask` (from flask import...), `Django` (django), `FastAPI` (fastapi)
 - Node.js: `Express` (require('express')), `Koa`, `Fastify`, `NestJS`
 - Ruby: `Rails`, `Sinatra`
@@ -33,6 +35,7 @@ For the framework, look at:
 - Java: `Spring Boot`, `Jakarta EE`
 
 For the database, look at:
+
 - `sqlite3`, `sqlite` → SQLite
 - `psycopg2`, `pg` → PostgreSQL
 - `pymysql`, `mysql2`, `mysql` → MySQL
@@ -42,6 +45,7 @@ For the database, look at:
 ### Step 1.2: Map Architecture
 
 Determine the current architecture pattern:
+
 - **Monolithic:** All code in 1-5 files, no folder separation
 - **Partially organized:** Has some folders (models/, routes/) but logic mixed
 - **Layered:** Clear separation but not MVC (e.g., routes + services only)
@@ -52,6 +56,7 @@ Count source files (exclude `node_modules`, `__pycache__`, `.git`, `venv`, `dist
 ### Step 1.3: Identify Domain
 
 Read route definitions, model names, and table names to infer the business domain:
+
 - Products, orders, users → E-commerce
 - Courses, enrollments, payments → LMS / Education
 - Tasks, users, categories → Task Management / Project Management
@@ -83,12 +88,14 @@ DB tables:     <list of tables/collections>
 ### Step 2.1: Load References
 
 Read these reference files for detection knowledge:
+
 - `references/anti-patterns-catalog.md` — What to look for
 - `references/report-template.md` — How to format output
 
 ### Step 2.2: Scan for Anti-Patterns
 
 For each anti-pattern in the catalog, scan ALL source files. For each finding, record:
+
 - **Severity:** CRITICAL, HIGH, MEDIUM, or LOW
 - **File:** Exact file path
 - **Line(s):** Exact line number or range
@@ -119,6 +126,7 @@ Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]
 ### Step 3.1: Load References
 
 Read these reference files for refactoring knowledge:
+
 - `references/mvc-guidelines.md` — Target architecture rules
 - `references/refactoring-playbook.md` — Transformation patterns
 
@@ -127,6 +135,7 @@ Read these reference files for refactoring knowledge:
 Design the target MVC structure based on the project's language and framework:
 
 **For Python/Flask:**
+
 ```
 src/
 ├── config/
@@ -150,6 +159,7 @@ src/
 ```
 
 **For Node.js/Express:**
+
 ```
 src/
 ├── config/
@@ -177,6 +187,7 @@ Apply transformations from the playbook. For each finding from Phase 2:
 4. **LOW issues last** — Code quality
 
 Key transformations to apply:
+
 - Extract configuration to config module (use environment variables)
 - Separate models by domain entity
 - Move business logic from routes to controllers

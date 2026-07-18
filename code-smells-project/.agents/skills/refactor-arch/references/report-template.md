@@ -96,11 +96,13 @@ Total: 14 findings
 ## Summary Line Format
 
 The summary line must use this exact format:
+
 ```
 CRITICAL: <n> | HIGH: <n> | MEDIUM: <n> | LOW: <n>
 ```
 
 If a severity has zero findings, still include it:
+
 ```
 CRITICAL: 3 | HIGH: 0 | MEDIUM: 5 | LOW: 2
 ```
@@ -115,6 +117,7 @@ When deprecated APIs are found, include them in the findings with the appropriat
 - **LOW:** Using older API patterns where newer, more readable alternatives exist
 
 Format:
+
 ```
 ### [MEDIUM] Deprecated API: datetime.utcnow()
 File: models/task.py:15,18, routes/task_routes.py:35

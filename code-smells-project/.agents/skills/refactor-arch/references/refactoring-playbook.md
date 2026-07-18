@@ -9,6 +9,7 @@ Concrete transformation patterns for each anti-pattern. Each pattern includes **
 **Anti-Pattern:** AP-001 | **Severity:** CRITICAL
 
 ### Python — Before ❌
+
 ```python
 # models.py
 cursor.execute("SELECT * FROM produtos WHERE id = " + str(id))
@@ -21,6 +22,7 @@ cursor.execute(
 ```
 
 ### Python — After ✅
+
 ```python
 # models/product_model.py
 cursor.execute("SELECT * FROM produtos WHERE id = ?", (id,))
@@ -35,12 +37,16 @@ cursor.execute(
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
 db.run("SELECT * FROM courses WHERE id = " + courseId);
-db.run("INSERT INTO users (name, email) VALUES ('" + name + "', '" + email + "')");
+db.run(
+  "INSERT INTO users (name, email) VALUES ('" + name + "', '" + email + "')",
+);
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
 db.run("SELECT * FROM courses WHERE id = ?", [courseId]);
 db.run("INSERT INTO users (name, email) VALUES (?, ?)", [name, email]);
@@ -53,6 +59,7 @@ db.run("INSERT INTO users (name, email) VALUES (?, ?)", [name, email]);
 **Anti-Pattern:** AP-002 | **Severity:** CRITICAL
 
 ### Python — Before ❌
+
 ```python
 # app.py
 app.config["SECRET_KEY"] = "minha-chave-super-secreta-123"
@@ -60,6 +67,7 @@ app.config["DEBUG"] = True
 ```
 
 ### Python — After ✅
+
 ```python
 # config/settings.py
 import os
@@ -74,21 +82,23 @@ app.config.from_object(Config)
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
 // utils.js
 const config = {
-    dbPass: "senha_super_secreta_prod_123",
-    paymentGatewayKey: "pk_live_1234567890abcdef",
+  dbPass: "senha_super_secreta_prod_123",
+  paymentGatewayKey: "pk_live_1234567890abcdef",
 };
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
 // config/index.js
 module.exports = {
-    dbPass: process.env.DB_PASSWORD,
-    paymentGatewayKey: process.env.PAYMENT_GATEWAY_KEY,
-    port: process.env.PORT || 3000,
+  dbPass: process.env.DB_PASSWORD,
+  paymentGatewayKey: process.env.PAYMENT_GATEWAY_KEY,
+  port: process.env.PORT || 3000,
 };
 ```
 
@@ -99,6 +109,7 @@ module.exports = {
 **Anti-Pattern:** AP-003 | **Severity:** CRITICAL
 
 ### Python — Before ❌
+
 ```python
 # models.py (350 lines — products, users, orders, reports all in one file)
 def get_todos_produtos(): ...
@@ -110,6 +121,7 @@ def relatorio_vendas(): ...
 ```
 
 ### Python — After ✅
+
 ```python
 # models/product_model.py
 class ProductModel:
@@ -145,6 +157,7 @@ class ProductController:
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
 // AppManager.js (130 lines — db init, routes, checkout, reports all in one class)
 class AppManager {
@@ -158,6 +171,7 @@ class AppManager {
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
 // models/course.model.js
 class Course {
@@ -184,6 +198,7 @@ router.post('/checkout', async (req, res) => {
 **Anti-Pattern:** AP-004, AP-005 | **Severity:** CRITICAL
 
 ### Python — Before ❌
+
 ```python
 # Plaintext
 cursor.execute(
@@ -196,6 +211,7 @@ self.password = hashlib.md5(pwd.encode()).hexdigest()
 ```
 
 ### Python — After ✅
+
 ```python
 # Use bcrypt
 import bcrypt
@@ -210,28 +226,30 @@ if user and bcrypt.checkpw(password.encode(), user.password_hash):
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
 // Custom "crypto" (broken)
 function badCrypto(pwd) {
-    let hash = "";
-    for(let i = 0; i < 10000; i++) {
-        hash += Buffer.from(pwd).toString('base64').substring(0, 2);
-    }
-    return hash.substring(0, 10);
+  let hash = "";
+  for (let i = 0; i < 10000; i++) {
+    hash += Buffer.from(pwd).toString("base64").substring(0, 2);
+  }
+  return hash.substring(0, 10);
 }
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
 // When creating user
 const hash = await bcrypt.hash(password, 10);
 
 // When authenticating
 const user = await User.findByEmail(email);
-if (user && await bcrypt.compare(password, user.password_hash)) {
-    return user;
+if (user && (await bcrypt.compare(password, user.password_hash))) {
+  return user;
 }
 ```
 
@@ -242,6 +260,7 @@ if (user && await bcrypt.compare(password, user.password_hash)) {
 **Anti-Pattern:** AP-007 | **Severity:** HIGH
 
 ### Python — Before ❌
+
 ```python
 # routes/task_routes.py — business logic in route handler
 @task_bp.route('/tasks', methods=['POST'])
@@ -264,6 +283,7 @@ def create_task():
 ```
 
 ### Python — After ✅
+
 ```python
 # controllers/task_controller.py
 class TaskController:
@@ -311,6 +331,7 @@ def create_task():
 **Anti-Pattern:** AP-012 | **Severity:** MEDIUM
 
 ### Python — Before ❌
+
 ```python
 # N+1: query orders, then for each order query items, then for each item query product name
 def get_todos_pedidos():
@@ -323,6 +344,7 @@ def get_todos_pedidos():
 ```
 
 ### Python — After ✅
+
 ```python
 # Single query with JOINs
 def get_all_orders():
@@ -353,6 +375,7 @@ def get_all_orders():
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
 // N+1: for each course, query enrollments, then for each enrollment query user, then payment
 db.all("SELECT * FROM courses", [], (err, courses) => {
@@ -368,9 +391,11 @@ db.all("SELECT * FROM courses", [], (err, courses) => {
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
 // Single query with JOINs
-db.all(`
+db.all(
+  `
     SELECT
         c.title as course_title,
         u.name as student_name,
@@ -380,14 +405,17 @@ db.all(`
     LEFT JOIN users u ON u.id = e.user_id
     LEFT JOIN payments p ON p.enrollment_id = e.id
     WHERE p.status = 'PAID'
-`, [], (err, rows) => {
+`,
+  [],
+  (err, rows) => {
     // Group by course in application code
     const report = rows.reduce((acc, row) => {
-        // ... grouping logic
-        return acc;
+      // ... grouping logic
+      return acc;
     }, []);
     res.json(report);
-});
+  },
+);
 ```
 
 ---
@@ -397,6 +425,7 @@ db.all(`
 **Anti-Pattern:** AP-016 | **Severity:** MEDIUM
 
 ### Python — Before ❌
+
 ```python
 # Repeated in every route handler
 try:
@@ -406,6 +435,7 @@ except Exception as e:
 ```
 
 ### Python — After ✅
+
 ```python
 # middlewares/error_handler.py
 import logging
@@ -442,43 +472,45 @@ def get_product(id):
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
 // Repeated try-catch in every route
-app.get('/api/data', (req, res) => {
-    try {
-        // ... logic ...
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+app.get("/api/data", (req, res) => {
+  try {
+    // ... logic ...
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
 // middlewares/errorHandler.js
 class AppError extends Error {
-    constructor(message, statusCode = 400) {
-        super(message);
-        this.statusCode = statusCode;
-    }
+  constructor(message, statusCode = 400) {
+    super(message);
+    this.statusCode = statusCode;
+  }
 }
 
 function errorHandler(err, req, res, next) {
-    if (err instanceof AppError) {
-        return res.status(err.statusCode).json({ error: err.message });
-    }
-    console.error('Internal error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+  if (err instanceof AppError) {
+    return res.status(err.statusCode).json({ error: err.message });
+  }
+  console.error("Internal error:", err);
+  res.status(500).json({ error: "Internal server error" });
 }
 
 // app.js
 app.use(errorHandler);
 
 // routes — just throw
-router.get('/data', async (req, res, next) => {
-    const data = await DataController.getData();
-    if (!data) throw new AppError('Data not found', 404);
-    res.json(data);
+router.get("/data", async (req, res, next) => {
+  const data = await DataController.getData();
+  if (!data) throw new AppError("Data not found", 404);
+  res.json(data);
 });
 ```
 
@@ -489,6 +521,7 @@ router.get('/data', async (req, res, next) => {
 **Anti-Pattern:** AP-018 | **Severity:** LOW
 
 ### Python — Before ❌
+
 ```python
 print("Servidor iniciado")
 print("ERRO: " + str(e))
@@ -496,6 +529,7 @@ print("Produto criado com ID: " + str(id))
 ```
 
 ### Python — After ✅
+
 ```python
 import logging
 
@@ -511,22 +545,24 @@ logger.info("Product created with ID: %d", product_id)
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
 console.log("Server running on port 3000");
 console.log("Error: " + err.message);
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
-const winston = require('winston');
+const winston = require("winston");
 const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.json(),
-    transports: [new winston.transports.Console()],
+  level: "info",
+  format: winston.format.json(),
+  transports: [new winston.transports.Console()],
 });
 
-logger.info('Server started', { port: 3000 });
-logger.error('Failed to process checkout', { error: err.message });
+logger.info("Server started", { port: 3000 });
+logger.error("Failed to process checkout", { error: err.message });
 ```
 
 ---
@@ -536,6 +572,7 @@ logger.error('Failed to process checkout', { error: err.message });
 **Anti-Pattern:** AP-019 | **Severity:** LOW
 
 ### Python — Before ❌
+
 ```python
 if len(nome) < 2:
     return error("Nome muito curto")
@@ -546,6 +583,7 @@ if preco < 0:
 ```
 
 ### Python — After ✅
+
 ```python
 # config/constants.py or at top of controller
 MIN_NAME_LENGTH = 2
@@ -568,6 +606,7 @@ if price < MIN_PRICE:
 **Anti-Pattern:** AP-011 | **Severity:** HIGH
 
 ### Python — Before ❌
+
 ```python
 # models/user.py
 def to_dict(self):
@@ -589,6 +628,7 @@ return jsonify({
 ```
 
 ### Python — After ✅
+
 ```python
 # models/user.py
 def to_dict(self):
@@ -616,6 +656,7 @@ def health_check():
 **Anti-Pattern:** AP-017 | **Severity:** MEDIUM
 
 ### Python — Before ❌
+
 ```python
 from datetime import datetime
 
@@ -624,6 +665,7 @@ due_date = datetime.utcnow() - timedelta(days=3)
 ```
 
 ### Python — After ✅
+
 ```python
 from datetime import datetime, timezone
 
@@ -632,18 +674,20 @@ due_date = datetime.now(timezone.utc) - timedelta(days=3)
 ```
 
 ### JavaScript — Before ❌
+
 ```javascript
-const db = new sqlite3.Database(':memory:');  // Callback-based, no promises
+const db = new sqlite3.Database(":memory:"); // Callback-based, no promises
 db.serialize(() => {
-    db.run("CREATE TABLE ...");
-    db.run("INSERT ...");
+  db.run("CREATE TABLE ...");
+  db.run("INSERT ...");
 });
 ```
 
 ### JavaScript — After ✅
+
 ```javascript
-const sqlite3 = require('better-sqlite3');
-const db = sqlite3(':memory:');
+const sqlite3 = require("better-sqlite3");
+const db = sqlite3(":memory:");
 
 // Synchronous, simpler API
 db.exec(`
@@ -659,6 +703,7 @@ db.exec(`
 **Anti-Pattern:** AP-021 | **Severity:** LOW
 
 ### Python — Before ❌
+
 ```python
 # No validation — accepts anything
 @task_bp.route('/tasks', methods=['POST'])
@@ -670,6 +715,7 @@ def create_task():
 ```
 
 ### Python — After ✅
+
 ```python
 # validators/task_validator.py
 from marshmallow import Schema, fields, validate, ValidationError

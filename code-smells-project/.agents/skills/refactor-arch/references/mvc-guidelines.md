@@ -17,6 +17,7 @@ Every file in the project must have **ONE clear responsibility**. If a file does
 **Responsibility:** Data access ONLY. No business logic, no HTTP concerns, no validation beyond schema constraints.
 
 **What goes here:**
+
 - Database schema definitions (ORM models, table definitions)
 - CRUD operations (create, read, update, delete)
 - Query methods (find by id, find by email, search with filters)
@@ -24,6 +25,7 @@ Every file in the project must have **ONE clear responsibility**. If a file does
 - Relationship definitions (foreign keys, joins)
 
 **What does NOT go here:**
+
 - Business rules (e.g., "order total must be > 0")
 - HTTP request/response handling
 - Authentication/authorization logic
@@ -31,11 +33,13 @@ Every file in the project must have **ONE clear responsibility**. If a file does
 - Input validation (beyond database constraints)
 
 **Naming convention:**
+
 - Python: `<entity>_model.py` or `<entity>.py` (e.g., `product_model.py`, `user.py`)
 - Node.js: `<entity>.model.js` (e.g., `product.model.js`)
 - One file per domain entity
 
 **Example (Python/Flask + SQLAlchemy):**
+
 ```python
 # models/product.py
 from database import db
@@ -70,28 +74,29 @@ class Product(db.Model):
 ```
 
 **Example (Node.js/Express):**
+
 ```javascript
 // models/course.model.js
-const db = require('../config/database');
+const db = require("../config/database");
 
 class Course {
-    static findById(id) {
-        return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM courses WHERE id = ?', [id], (err, row) => {
-                if (err) reject(err);
-                else resolve(row);
-            });
-        });
-    }
+  static findById(id) {
+    return new Promise((resolve, reject) => {
+      db.get("SELECT * FROM courses WHERE id = ?", [id], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+  }
 
-    static findAllActive() {
-        return new Promise((resolve, reject) => {
-            db.all('SELECT * FROM courses WHERE active = 1', [], (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
-    }
+  static findAllActive() {
+    return new Promise((resolve, reject) => {
+      db.all("SELECT * FROM courses WHERE active = 1", [], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+  }
 }
 
 module.exports = Course;
@@ -104,6 +109,7 @@ module.exports = Course;
 **Responsibility:** Business logic and orchestration. Controllers know WHAT to do, not HOW to do HTTP.
 
 **What goes here:**
+
 - Business rules and validations
 - Orchestrating multiple model calls
 - Applying domain logic (calculations, state transitions)
@@ -111,16 +117,19 @@ module.exports = Course;
 - Preparing data for the view/response
 
 **What does NOT go here:**
+
 - HTTP request parsing (`request.json`, `req.body`)
 - HTTP response formatting (`jsonify()`, `res.json()`)
 - Route definitions (`@app.route`, `app.get()`)
 - Direct SQL queries (use models)
 
 **Naming convention:**
+
 - Python: `<entity>_controller.py` (e.g., `product_controller.py`)
 - Node.js: `<entity>.controller.js` (e.g., `product.controller.js`)
 
 **Example (Python/Flask):**
+
 ```python
 # controllers/product_controller.py
 from models.product import Product
@@ -153,33 +162,34 @@ class ProductController:
 ```
 
 **Example (Node.js/Express):**
+
 ```javascript
 // controllers/checkout.controller.js
-const Course = require('../models/course.model');
-const User = require('../models/user.model');
-const Enrollment = require('../models/enrollment.model');
+const Course = require("../models/course.model");
+const User = require("../models/user.model");
+const Enrollment = require("../models/enrollment.model");
 
 class CheckoutController {
-    static async processCheckout(userData, courseId, cardInfo) {
-        // Business logic
-        const course = await Course.findById(courseId);
-        if (!course) {
-            throw new Error('Course not found');
-        }
-
-        let user = await User.findByEmail(userData.email);
-        if (!user) {
-            user = await User.create(userData);
-        }
-
-        const paymentResult = await PaymentService.process(cardInfo, course.price);
-        if (!paymentResult.success) {
-            throw new Error('Payment declined');
-        }
-
-        const enrollment = await Enrollment.create(user.id, courseId, course.price);
-        return { enrollment_id: enrollment.id, status: 'success' };
+  static async processCheckout(userData, courseId, cardInfo) {
+    // Business logic
+    const course = await Course.findById(courseId);
+    if (!course) {
+      throw new Error("Course not found");
     }
+
+    let user = await User.findByEmail(userData.email);
+    if (!user) {
+      user = await User.create(userData);
+    }
+
+    const paymentResult = await PaymentService.process(cardInfo, course.price);
+    if (!paymentResult.success) {
+      throw new Error("Payment declined");
+    }
+
+    const enrollment = await Enrollment.create(user.id, courseId, course.price);
+    return { enrollment_id: enrollment.id, status: "success" };
+  }
 }
 ```
 
@@ -190,6 +200,7 @@ class CheckoutController {
 **Responsibility:** HTTP concerns ONLY. Parse requests, call controllers, format responses.
 
 **What goes here:**
+
 - Route definitions (URL patterns, HTTP methods)
 - Request parsing (query params, body, headers)
 - Response formatting (JSON, status codes)
@@ -197,16 +208,19 @@ class CheckoutController {
 - Basic request validation (is the body present? is the ID an integer?)
 
 **What does NOT go here:**
+
 - Business logic
 - Database queries
 - Complex validations
 - String formatting for business purposes
 
 **Naming convention:**
+
 - Python: `<entity>_routes.py` (e.g., `product_routes.py`)
 - Node.js: `<entity>.routes.js` (e.g., `product.routes.js`)
 
 **Example (Python/Flask):**
+
 ```python
 # routes/product_routes.py
 from flask import Blueprint, request, jsonify
@@ -236,23 +250,28 @@ def create_product():
 ```
 
 **Example (Node.js/Express):**
+
 ```javascript
 // routes/checkout.routes.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const CheckoutController = require('../controllers/checkout.controller');
+const CheckoutController = require("../controllers/checkout.controller");
 
-router.post('/checkout', async (req, res) => {
-    try {
-        const { user, course_id, card } = req.body;
-        if (!user || !course_id || !card) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        const result = await CheckoutController.processCheckout(user, course_id, card);
-        res.status(200).json(result);
-    } catch (err) {
-        res.status(500).json({ error: 'Internal server error' });
+router.post("/checkout", async (req, res) => {
+  try {
+    const { user, course_id, card } = req.body;
+    if (!user || !course_id || !card) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
+    const result = await CheckoutController.processCheckout(
+      user,
+      course_id,
+      card,
+    );
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 module.exports = router;
@@ -265,6 +284,7 @@ module.exports = router;
 **Responsibility:** Centralize ALL configuration. Nothing hardcoded anywhere else.
 
 **What goes here:**
+
 - Environment variables
 - Database connection strings
 - API keys and secrets
@@ -272,6 +292,7 @@ module.exports = router;
 - Application settings (port, debug mode, CORS origins)
 
 **Example (Python):**
+
 ```python
 # config/settings.py
 import os
@@ -284,18 +305,19 @@ class Config:
 ```
 
 **Example (Node.js):**
+
 ```javascript
 // config/index.js
 module.exports = {
-    port: process.env.PORT || 3000,
-    dbPath: process.env.DB_PATH || ':memory:',
-    jwtSecret: process.env.JWT_SECRET,
-    paymentGatewayKey: process.env.PAYMENT_GATEWAY_KEY,
-    smtp: {
-        host: process.env.SMTP_HOST,
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    }
+  port: process.env.PORT || 3000,
+  dbPath: process.env.DB_PATH || ":memory:",
+  jwtSecret: process.env.JWT_SECRET,
+  paymentGatewayKey: process.env.PAYMENT_GATEWAY_KEY,
+  smtp: {
+    host: process.env.SMTP_HOST,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
 };
 ```
 
@@ -306,6 +328,7 @@ module.exports = {
 **Responsibility:** Request/response pipeline concerns that apply across routes.
 
 **What goes here:**
+
 - Error handling (global error handler)
 - Authentication/authorization checks
 - Request logging
@@ -313,6 +336,7 @@ module.exports = {
 - Rate limiting
 
 **Example (Python/Flask):**
+
 ```python
 # middlewares/error_handler.py
 from flask import jsonify
@@ -342,6 +366,7 @@ def register_error_handlers(app):
 **Responsibility:** Business logic that spans multiple domains or integrates with external systems.
 
 **What goes here:**
+
 - Email sending
 - Push notifications
 - Payment processing
@@ -353,6 +378,7 @@ def register_error_handlers(app):
 ## Directory Structure
 
 ### Python/Flask Target:
+
 ```
 project/
 ├── config/
@@ -379,6 +405,7 @@ project/
 ```
 
 ### Node.js/Express Target:
+
 ```
 project/
 ├── src/
@@ -436,6 +463,7 @@ if __name__ == '__main__':
 ## Validation Checklist
 
 After refactoring, verify:
+
 - [ ] No file has more than one responsibility
 - [ ] No business logic in routes
 - [ ] No HTTP concerns in models

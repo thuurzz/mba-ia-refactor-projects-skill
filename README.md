@@ -141,17 +141,18 @@ Seguindo a especificação do Codex, o `SKILL.md` inclui frontmatter YAML com `n
 
 **3. 5 arquivos de referência cobrindo as 5 áreas obrigatórias**
 
-| Arquivo | Área | Conteúdo |
-|---------|------|----------|
-| `project-analysis.md` | Análise de projeto | Heurísticas para detectar 8+ linguagens, frameworks, bancos e padrões de arquitetura |
-| `anti-patterns-catalog.md` | Catálogo de anti-patterns | 21 anti-patterns com sinais de detecção, severidade e recomendações |
-| `report-template.md` | Template de relatório | Formato exato do output da Fase 2 com regras de ordenação e exemplos |
-| `mvc-guidelines.md` | Guidelines de arquitetura | Definição das 6 camadas MVC com exemplos Python e Node.js |
-| `refactoring-playbook.md` | Playbook de refatoração | 12 padrões de transformação com código antes/depois em Python e JavaScript |
+| Arquivo                    | Área                      | Conteúdo                                                                             |
+| -------------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| `project-analysis.md`      | Análise de projeto        | Heurísticas para detectar 8+ linguagens, frameworks, bancos e padrões de arquitetura |
+| `anti-patterns-catalog.md` | Catálogo de anti-patterns | 21 anti-patterns com sinais de detecção, severidade e recomendações                  |
+| `report-template.md`       | Template de relatório     | Formato exato do output da Fase 2 com regras de ordenação e exemplos                 |
+| `mvc-guidelines.md`        | Guidelines de arquitetura | Definição das 6 camadas MVC com exemplos Python e Node.js                            |
+| `refactoring-playbook.md`  | Playbook de refatoração   | 12 padrões de transformação com código antes/depois em Python e JavaScript           |
 
 **4. Agnosticismo de tecnologia**
 
 A skill é agnóstica por design:
+
 - O `project-analysis.md` cobre heurísticas para 8+ linguagens (Python, JS, Ruby, PHP, Go, Java, Rust, C#)
 - O `anti-patterns-catalog.md` descreve sinais de detecção em termos genéricos (ex: "string concatenation in SQL queries" em vez de "f-strings in Python")
 - O `refactoring-playbook.md` fornece exemplos before/after em **Python e JavaScript** para cada padrão
@@ -159,48 +160,48 @@ A skill é agnóstica por design:
 
 ### Anti-Patterns Incluídos no Catálogo
 
-| # | ID | Nome | Severidade |
-|---|-----|------|------------|
-| 1 | AP-001 | SQL Injection | CRITICAL |
-| 2 | AP-002 | Hardcoded Credentials / Secrets | CRITICAL |
-| 3 | AP-003 | God Class / God Module | CRITICAL |
-| 4 | AP-004 | Plaintext Password Storage | CRITICAL |
-| 5 | AP-005 | Weak Cryptographic Hashing | CRITICAL |
-| 6 | AP-006 | Logging Sensitive Data | CRITICAL |
-| 7 | AP-007 | Business Logic in Routes/Controllers | HIGH |
-| 8 | AP-008 | Debug Mode in Production | HIGH |
-| 9 | AP-009 | Global Mutable State | HIGH |
-| 10 | AP-010 | Missing Authentication / Fake Auth | HIGH |
-| 11 | AP-011 | Information Leakage in Responses | HIGH |
-| 12 | AP-012 | N+1 Query Problem | MEDIUM |
-| 13 | AP-013 | Code Duplication | MEDIUM |
-| 14 | AP-014 | Missing Cascade / Orphaned Records | MEDIUM |
-| 15 | AP-015 | Unused Code / Dead Code | MEDIUM |
-| 16 | AP-016 | Generic Exception Handling | MEDIUM |
-| 17 | AP-017 | Deprecated APIs | MEDIUM |
-| 18 | AP-018 | Print Statements as Logging | LOW |
-| 19 | AP-019 | Magic Numbers / Magic Strings | LOW |
-| 20 | AP-020 | Poor Variable Naming | LOW |
-| 21 | AP-021 | Missing Input Validation | LOW |
+| #   | ID     | Nome                                 | Severidade |
+| --- | ------ | ------------------------------------ | ---------- |
+| 1   | AP-001 | SQL Injection                        | CRITICAL   |
+| 2   | AP-002 | Hardcoded Credentials / Secrets      | CRITICAL   |
+| 3   | AP-003 | God Class / God Module               | CRITICAL   |
+| 4   | AP-004 | Plaintext Password Storage           | CRITICAL   |
+| 5   | AP-005 | Weak Cryptographic Hashing           | CRITICAL   |
+| 6   | AP-006 | Logging Sensitive Data               | CRITICAL   |
+| 7   | AP-007 | Business Logic in Routes/Controllers | HIGH       |
+| 8   | AP-008 | Debug Mode in Production             | HIGH       |
+| 9   | AP-009 | Global Mutable State                 | HIGH       |
+| 10  | AP-010 | Missing Authentication / Fake Auth   | HIGH       |
+| 11  | AP-011 | Information Leakage in Responses     | HIGH       |
+| 12  | AP-012 | N+1 Query Problem                    | MEDIUM     |
+| 13  | AP-013 | Code Duplication                     | MEDIUM     |
+| 14  | AP-014 | Missing Cascade / Orphaned Records   | MEDIUM     |
+| 15  | AP-015 | Unused Code / Dead Code              | MEDIUM     |
+| 16  | AP-016 | Generic Exception Handling           | MEDIUM     |
+| 17  | AP-017 | Deprecated APIs                      | MEDIUM     |
+| 18  | AP-018 | Print Statements as Logging          | LOW        |
+| 19  | AP-019 | Magic Numbers / Magic Strings        | LOW        |
+| 20  | AP-020 | Poor Variable Naming                 | LOW        |
+| 21  | AP-021 | Missing Input Validation             | LOW        |
 
 **Distribuição:** 6 CRITICAL · 5 HIGH · 6 MEDIUM · 4 LOW = **21 anti-patterns**
 
 ### Padrões de Transformação no Playbook
 
-| # | Padrão | Anti-Pattern |
-|---|--------|-------------|
-| 1 | Fix SQL Injection → Parameterized Queries | AP-001 |
-| 2 | Extract Hardcoded Config → Environment Variables | AP-002 |
-| 3 | Split God Class → Domain Models + Controllers | AP-003 |
-| 4 | Hash Passwords Properly (bcrypt) | AP-004, AP-005 |
-| 5 | Move Business Logic from Routes → Controllers | AP-007 |
-| 6 | Fix N+1 Queries → JOINs / Eager Loading | AP-012 |
-| 7 | Centralize Error Handling | AP-016 |
-| 8 | Replace Print/Console.log → Structured Logging | AP-018 |
-| 9 | Extract Magic Numbers → Named Constants | AP-019 |
-| 10 | Remove Sensitive Data from API Responses | AP-011 |
-| 11 | Fix Deprecated APIs | AP-017 |
-| 12 | Add Input Validation Layer | AP-021 |
+| #   | Padrão                                           | Anti-Pattern   |
+| --- | ------------------------------------------------ | -------------- |
+| 1   | Fix SQL Injection → Parameterized Queries        | AP-001         |
+| 2   | Extract Hardcoded Config → Environment Variables | AP-002         |
+| 3   | Split God Class → Domain Models + Controllers    | AP-003         |
+| 4   | Hash Passwords Properly (bcrypt)                 | AP-004, AP-005 |
+| 5   | Move Business Logic from Routes → Controllers    | AP-007         |
+| 6   | Fix N+1 Queries → JOINs / Eager Loading          | AP-012         |
+| 7   | Centralize Error Handling                        | AP-016         |
+| 8   | Replace Print/Console.log → Structured Logging   | AP-018         |
+| 9   | Extract Magic Numbers → Named Constants          | AP-019         |
+| 10  | Remove Sensitive Data from API Responses         | AP-011         |
+| 11  | Fix Deprecated APIs                              | AP-017         |
+| 12  | Add Input Validation Layer                       | AP-021         |
 
 ### Desafios e Soluções
 
@@ -261,6 +262,7 @@ codex "/refactor-arch"
 ### Validando a Refatoração
 
 **Projeto 1 (code-smells-project):**
+
 ```bash
 cd code-smells-project
 pip install -r requirements.txt
@@ -269,6 +271,7 @@ python app.py
 ```
 
 **Projeto 2 (ecommerce-api-legacy):**
+
 ```bash
 cd ecommerce-api-legacy
 npm install
@@ -277,6 +280,7 @@ npm start
 ```
 
 **Projeto 3 (task-manager-api):**
+
 ```bash
 cd task-manager-api
 pip install -r requirements.txt

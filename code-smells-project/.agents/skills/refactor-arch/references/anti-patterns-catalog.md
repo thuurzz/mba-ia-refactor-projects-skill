@@ -9,6 +9,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-001: SQL Injection
 
 **Detection signals:**
+
 - String concatenation in SQL queries: `"SELECT * FROM " + table`, `"WHERE id = " + id`, `f"SELECT * FROM {table}"`
 - Template literals in queries: `` `SELECT * FROM users WHERE id = ${id}` ``
 - No usage of parameterized queries (`?` placeholders, `$1`, `%s` with tuple, prepared statements)
@@ -18,6 +19,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Attacker can execute arbitrary SQL — read/modify/delete any data in the database.
 
 **Recommendation:** Use parameterized queries 100% of the time. Examples:
+
 - Python: `cursor.execute("SELECT * FROM x WHERE y = ?", (y,))`
 - Node.js: `db.run("SELECT * FROM x WHERE y = ?", [y])`
 - Java: `PreparedStatement ps = conn.prepareStatement("SELECT * FROM x WHERE y = ?")`
@@ -27,6 +29,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-002: Hardcoded Credentials / Secrets
 
 **Detection signals:**
+
 - Variable names containing: `password`, `secret`, `key`, `token`, `api_key`, `private`, `credential`
 - Assigned to string literals (not from env): `SECRET_KEY = "abc123"`, `const apiKey = "sk-..."`
 - Database credentials in source: `dbPass: "mypassword"`, `user: "admin", password: "admin123"`
@@ -37,6 +40,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** If code is ever exposed (public repo, leak, former employee), attackers gain access to all integrated services.
 
 **Recommendation:** Use environment variables or a secrets manager:
+
 - Python: `os.environ.get("SECRET_KEY")`
 - Node.js: `process.env.SECRET_KEY`
 - Never commit `.env` files; provide `.env.example` with placeholder values.
@@ -46,6 +50,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-003: God Class / God Module
 
 **Detection signals:**
+
 - Single file > 200 lines with multiple unrelated responsibilities
 - File contains: database queries + business logic + validation + formatting + routing
 - Class with > 10 public methods serving different domains
@@ -55,6 +60,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Violates Single Responsibility Principle. Impossible to test in isolation. Any change risks breaking unrelated functionality.
 
 **Recommendation:** Split by domain entity. Each file should handle ONE thing:
+
 - `models/produto.py` — only product data access
 - `controllers/pedido_controller.py` — only order business logic
 - `routes/user_routes.py` — only user route definitions
@@ -64,6 +70,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-004: Plaintext Password Storage
 
 **Detection signals:**
+
 - Passwords stored/comparated without hashing: `WHERE senha = '...'`
 - No hash function used before storage: `INSERT INTO users (..., password) VALUES (..., 'plaintext')`
 - Passwords in seed data as plaintext: `('admin', 'admin@email.com', 'admin123')`
@@ -72,6 +79,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Database breach exposes all user passwords. Users often reuse passwords across services.
 
 **Recommendation:** Always hash passwords with bcrypt, scrypt, or argon2:
+
 - Python: `bcrypt.hashpw(password.encode(), bcrypt.gensalt())`
 - Node.js: `await bcrypt.hash(password, 10)`
 
@@ -80,6 +88,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-005: Weak Cryptographic Hashing
 
 **Detection signals:**
+
 - Usage of MD5: `hashlib.md5()`, `md5()`, `MD5()`
 - Usage of SHA-1: `hashlib.sha1()`, `sha1()`
 - Custom/homegrown hash functions: loops with string concatenation, base64 tricks
@@ -94,6 +103,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-006: Logging Sensitive Data
 
 **Detection signals:**
+
 - `console.log` or `print` containing variables named: `password`, `card`, `credit`, `ssn`, `token`, `secret`
 - Logging full request bodies that may contain PII
 - Logging credit card numbers: `console.log("Processing card " + cc)`
@@ -102,6 +112,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Violates PCI-DSS, GDPR, LGPD. Sensitive data in logs is a compliance nightmare.
 
 **Recommendation:** Never log sensitive data. Use structured logging with redaction:
+
 - Mask credit cards: `****-****-****-${cc.slice(-4)}`
 - Never log passwords, tokens, or PII
 
@@ -112,6 +123,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-007: Business Logic in Routes/Controllers
 
 **Detection signals:**
+
 - Route handlers containing: validation logic, business rules, data transformation, multiple if/else for business decisions
 - Route handler > 30 lines
 - Direct database queries in route handlers (bypassing models/services)
@@ -120,6 +132,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Violates MVC separation. Routes should only handle HTTP concerns (request parsing, response formatting). Business logic should be in controllers/services.
 
 **Recommendation:** Extract business logic to controller/service layer:
+
 - Routes: parse request → call controller → format response
 - Controllers: validate → apply business rules → call models
 - Models: data access only
@@ -129,6 +142,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-008: Debug Mode in Production
 
 **Detection signals:**
+
 - `DEBUG = True`, `debug: true`, `app.run(debug=True)`, `NODE_ENV = 'development'`
 - Debug toolbar enabled
 - Stack traces exposed to users
@@ -137,6 +151,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Exposes internal paths, stack traces, environment details. Werkzeug debugger allows remote code execution.
 
 **Recommendation:** Use environment variables:
+
 - `DEBUG = os.environ.get("DEBUG", "false").lower() == "true"`
 - `app.run(debug=False)` in production
 
@@ -145,6 +160,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-009: Global Mutable State
 
 **Detection signals:**
+
 - Module-level mutable variables: `cache = {}`, `let globalCache = {}`
 - Global variables modified across requests: `totalRevenue = 0` then `totalRevenue += amount`
 - Singletons without thread safety
@@ -153,6 +169,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Unpredictable behavior in concurrent requests. State leaks between users. Not thread-safe.
 
 **Recommendation:** Use proper state management:
+
 - Database for persistent state
 - Redis/Memcached for cache
 - Request-local context for per-request state
@@ -162,6 +179,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-010: Missing Authentication / Fake Auth
 
 **Detection signals:**
+
 - Fake/hardcoded tokens: `'token': 'fake-jwt-token-' + str(user.id)`
 - No token validation on protected routes
 - Authentication commented out or TODO
@@ -176,6 +194,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-011: Information Leakage in Responses
 
 **Detection signals:**
+
 - API responses returning: password hashes, internal paths, database names, secret keys
 - Health check endpoints exposing: `secret_key`, `db_path`, `debug` status, `environment`
 - Error responses with full stack traces
@@ -192,6 +211,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-012: N+1 Query Problem
 
 **Detection signals:**
+
 - Database queries inside loops: `for item in items: cursor.execute("SELECT ...")`
 - Nested queries: query A → for each result → query B → for each result → query C
 - Multiple `db.get()` or `Model.query` calls inside `forEach`/`for` loops
@@ -200,6 +220,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** For N parent records, executes N×M additional queries. Performance degrades exponentially with data growth.
 
 **Recommendation:** Use JOINs, eager loading, or batch queries:
+
 - SQL: `SELECT * FROM pedidos JOIN itens_pedido ON ...`
 - SQLAlchemy: `Task.query.options(joinedload(Task.user)).all()`
 - Sequelize: `Model.findAll({ include: [RelatedModel] })`
@@ -209,6 +230,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-013: Code Duplication
 
 **Detection signals:**
+
 - Same validation logic in create and update handlers
 - Repeated overdue/status calculation logic across multiple files
 - Copy-pasted error handling blocks
@@ -223,6 +245,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-014: Missing Cascade / Orphaned Records
 
 **Detection signals:**
+
 - DELETE operations that don't clean up related records
 - Foreign keys without ON DELETE CASCADE
 - Comments like "matrículas e pagamentos ficaram sujos no banco"
@@ -237,6 +260,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-015: Unused Code / Dead Code
 
 **Detection signals:**
+
 - Imported modules never used: `import json, os, sys` (none used)
 - Functions defined but never called
 - Utility files with functions that routes reimplement manually
@@ -251,6 +275,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-016: Generic Exception Handling
 
 **Detection signals:**
+
 - `except Exception as e:` or `except:` without specific exception types
 - `catch (err)` without checking error type
 - Returning raw exception messages to clients: `return jsonify({"erro": str(e)})`
@@ -265,6 +290,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-017: Deprecated APIs
 
 **Detection signals (Python):**
+
 - `datetime.utcnow()` → deprecated in Python 3.12+, use `datetime.now(datetime.UTC)`
 - `hashlib.md5()` for security → use `hashlib.sha256()` or bcrypt
 - `sqlite3.connect(..., check_same_thread=False)` → use SQLAlchemy or connection pool
@@ -272,6 +298,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 - `app.run()` for production → use gunicorn/uwsgi
 
 **Detection signals (Node.js):**
+
 - `sqlite3` (callback-based) → use `better-sqlite3` (sync) or `sqlite3` with async/await wrapper
 - `Buffer()` without `Buffer.alloc()` or `Buffer.from()`
 - `request` package (deprecated) → use `fetch` or `axios`
@@ -279,6 +306,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 - `new sqlite3.Database(':memory:')` without proper error handling
 
 **Detection signals (General):**
+
 - Callback-based APIs where Promise/async-await is standard
 - `var` instead of `let`/`const` in modern JavaScript
 - `__future__` imports for features already default in current Python version
@@ -294,6 +322,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-018: Print Statements as Logging
 
 **Detection signals:**
+
 - `print()` used for operational messages: `print("Server started")`, `print("Error: " + str(e))`
 - `console.log()` used without a logging library
 - No log levels (DEBUG, INFO, WARNING, ERROR)
@@ -302,6 +331,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** No log level filtering, no rotation, no structured format. Difficult to debug in production.
 
 **Recommendation:** Use proper logging:
+
 - Python: `logging` module with `logging.getLogger(__name__)`
 - Node.js: `winston`, `pino`, or `morgan`
 
@@ -310,6 +340,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-019: Magic Numbers / Magic Strings
 
 **Detection signals:**
+
 - Numeric literals without named constants: `if len(name) < 2`, `if priority > 5`
 - Status strings repeated as literals: `'pending'`, `'done'`, `'cancelled'`
 - Configuration values inline: `port = 5000`, `max_retries = 3`
@@ -317,6 +348,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 **Impact:** Hard to maintain. Changing a value requires finding all occurrences.
 
 **Recommendation:** Define named constants:
+
 - `MIN_NAME_LENGTH = 2`
 - `VALID_STATUSES = ['pending', 'in_progress', 'done', 'cancelled']`
 - `DEFAULT_PORT = 5000`
@@ -326,6 +358,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-020: Poor Variable Naming
 
 **Detection signals:**
+
 - Single-letter variables (except loop counters): `u`, `e`, `p`, `c`
 - Abbreviated names that obscure meaning: `cid`, `enrId`, `usr`
 - Inconsistent language mixing: some variables in Portuguese, some in English
@@ -340,6 +373,7 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 ### AP-021: Missing Input Validation
 
 **Detection signals:**
+
 - No validation of required fields
 - No type checking on numeric inputs
 - No length limits on string inputs
@@ -353,9 +387,9 @@ Catalog of architectural anti-patterns, code smells, and security vulnerabilitie
 
 ## Severity Classification Rules
 
-| Severity | Criteria |
-|----------|----------|
+| Severity     | Criteria                                                                 |
+| ------------ | ------------------------------------------------------------------------ |
 | **CRITICAL** | Security vulnerabilities, data exposure, complete architecture violation |
-| **HIGH** | Strong MVC/SOLID violations, design flaws affecting maintainability |
-| **MEDIUM** | Performance issues, code duplication, standardization problems |
-| **LOW** | Readability, naming, minor quality improvements |
+| **HIGH**     | Strong MVC/SOLID violations, design flaws affecting maintainability      |
+| **MEDIUM**   | Performance issues, code duplication, standardization problems           |
+| **LOW**      | Readability, naming, minor quality improvements                          |
