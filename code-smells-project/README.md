@@ -6,7 +6,7 @@ API de E-commerce em Python/Flask usada como entrada do desafio `refactor-arch`.
 
 ```bash
 pip install -r requirements.txt
-python app.py
+python3 app.py
 ```
 
 A aplicação sobe em `http://localhost:5000`. O banco SQLite (`loja.db`) é criado automaticamente no primeiro boot, já com produtos e usuários de exemplo.
