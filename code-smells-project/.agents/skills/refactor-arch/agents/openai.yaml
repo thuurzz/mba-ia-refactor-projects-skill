@@ -1,0 +1,7 @@
+interface:
+  display_name: "Refactor Arch"
+  short_description: "Analyze, audit, and refactor legacy projects to MVC architecture. Detects anti-patterns, security vulnerabilities, and deprecated APIs across any language/framework."
+  default_prompt: "Analyze this project's architecture, generate an audit report with all anti-patterns and security issues, then refactor it to follow the MVC pattern. Pause for confirmation before making any changes."
+
+policy:
+  allow_implicit_invocation: false
