@@ -18,22 +18,22 @@ Análise detalhada dos 3 projetos-alvo, identificando problemas de arquitetura, 
 **Arquitetura atual:** Monolito — 4 arquivos sem separação de camadas
 **Domínio:** E-commerce (produtos, usuários, pedidos, relatórios)
 
-| #   | Severidade   | Arquivo:Linha                                   | Problema                                                                                                                                                   | Justificativa                                                                                                      |
-| --- | ------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 1   | **CRITICAL** | `models.py:1-350`                               | **God Class** — Arquivo único contém toda lógica de negócio, queries SQL, validação e formatação para 4 domínios (produtos, usuários, pedidos, relatórios) | Viola SRP (Single Responsibility Principle). Impossível testar isoladamente. Qualquer mudança afeta tudo.          |
-| 2   | **CRITICAL** | `models.py:28,48,58,95,108,130,175,195,280,295` | **SQL Injection em TODAS as queries** — Concatenação direta de strings do usuário nas queries (`"SELECT * FROM produtos WHERE id = " + str(id)`)           | Permite que um atacante execute SQL arbitrário no banco. Ex:`1; DROP TABLE produtos;--`                            |
-| 3   | **CRITICAL** | `app.py:68-82`                                  | **Backdoor de SQL Injection** — Rota `/admin/query` permite executar SQL arbitrário via POST                                                               | Um endpoint público que aceita qualquer query SQL é um desastre de segurança. Equivale a dar acesso root ao banco. |
-| 4   | **CRITICAL** | `app.py:8`                                      | **Hardcoded Secret Key** — `SECRET_KEY = "minha-chave-super-secreta-123"`                                                                                  | Chave criptográfica exposta no código-fonte. Se o repositório for público, qualquer um pode forjar sessões.        |
-| 5   | **HIGH**     | `models.py:95-108`                              | **Senhas em plaintext** — Senhas armazenadas e comparadas sem hash (`WHERE email = '...' AND senha = '...'`)                                               | Senhas dos usuários ficam expostas no banco. Se houver vazamento, todas as contas são comprometidas.               |
-| 6   | **HIGH**     | `controllers.py:280-295`                        | **Health check vaza dados sensíveis** — `/health` retorna `secret_key`, `db_path`, `debug`, `ambiente`                                                     | Expõe informações críticas de configuração que facilitam ataques direcionados.                                     |
-| 7   | **HIGH**     | `controllers.py:30-60`                          | **Lógica de negócio no Controller** — Validações de preço, estoque, categorias válidas estão nos controllers                                               | Viola o princípio MVC: controllers devem orquestrar, não conter regras de negócio.                                 |
-| 8   | **HIGH**     | `app.py:9,92`                                   | **Debug=True em produção** — `app.config["DEBUG"] = True` e `app.run(debug=True)`                                                                          | Modo debug expõe stack traces completos e permite execução de código arbitrário via console Werkzeug.              |
-| 9   | **MEDIUM**   | `models.py:175-230`                             | **N+1 Query Problem** — `get_pedidos_usuario` e `get_todos_pedidos` fazem queries dentro de loops (cursor2, cursor3)                                       | Para N pedidos, são executadas N×M queries adicionais. Performance degrada exponencialmente.                       |
-| 10  | **MEDIUM**   | `controllers.py:30-60 vs 70-95`                 | **Duplicação de código** — Validações de `criar_produto` repetidas em `atualizar_produto`                                                                  | Viola DRY. Mudanças precisam ser feitas em múltiplos lugares.                                                      |
-| 11  | **MEDIUM**   | `controllers.py` (vários)                       | **Exceções genéricas expostas** — `except Exception as e: return jsonify({"erro": str(e)})`                                                                | Expõe mensagens de erro internas (stack traces, paths) para o cliente.                                             |
-| 12  | **LOW**      | `controllers.py:6, models.py:todo`              | **Print statements como logging** — Uso de `print()` em vez de módulo `logging`                                                                            | Sem níveis de log, sem rotação, sem formato estruturado. Difícil depurar em produção.                              |
-| 13  | **LOW**      | `models.py:2`                                   | **Import não utilizado** — `import sqlite3` (usa `get_db` do database.py)                                                                                  | Código morto que polui o namespace.                                                                                |
-| 14  | **LOW**      | `controllers.py:55-56`                          | **Magic numbers** — `len(nome) < 2`, `len(nome) > 200` sem constantes nomeadas                                                                             | Dificulta manutenção. Se o limite mudar, precisa caçar todos os lugares.                                           |
+| #  | Severidade         | Arquivo:Linha                                     | Problema                                                                                                                                                                     | Justificativa                                                                                                         |
+| -- | ------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| 1  | **CRITICAL** | `models.py:1-350`                               | **God Class** — Arquivo único contém toda lógica de negócio, queries SQL, validação e formatação para 4 domínios (produtos, usuários, pedidos, relatórios) | Viola SRP (Single Responsibility Principle). Impossível testar isoladamente. Qualquer mudança afeta tudo.           |
+| 2  | **CRITICAL** | `models.py:28,48,58,95,108,130,175,195,280,295` | **SQL Injection em TODAS as queries** — Concatenação direta de strings do usuário nas queries (`"SELECT * FROM produtos WHERE id = " + str(id)`)                 | Permite que um atacante execute SQL arbitrário no banco. Ex:`1; DROP TABLE produtos;--`                            |
+| 3  | **CRITICAL** | `app.py:68-82`                                  | **Backdoor de SQL Injection** — Rota `/admin/query` permite executar SQL arbitrário via POST                                                                       | Um endpoint público que aceita qualquer query SQL é um desastre de segurança. Equivale a dar acesso root ao banco. |
+| 4  | **CRITICAL** | `app.py:8`                                      | **Hardcoded Secret Key** — `SECRET_KEY = "minha-chave-super-secreta-123"`                                                                                           | Chave criptográfica exposta no código-fonte. Se o repositório for público, qualquer um pode forjar sessões.      |
+| 5  | **HIGH**     | `models.py:95-108`                              | **Senhas em plaintext** — Senhas armazenadas e comparadas sem hash (`WHERE email = '...' AND senha = '...'`)                                                        | Senhas dos usuários ficam expostas no banco. Se houver vazamento, todas as contas são comprometidas.                |
+| 6  | **HIGH**     | `controllers.py:280-295`                        | **Health check vaza dados sensíveis** — `/health` retorna `secret_key`, `db_path`, `debug`, `ambiente`                                                     | Expõe informações críticas de configuração que facilitam ataques direcionados.                                  |
+| 7  | **HIGH**     | `controllers.py:30-60`                          | **Lógica de negócio no Controller** — Validações de preço, estoque, categorias válidas estão nos controllers                                                   | Viola o princípio MVC: controllers devem orquestrar, não conter regras de negócio.                                 |
+| 8  | **HIGH**     | `app.py:9,92`                                   | **Debug=True em produção** — `app.config["DEBUG"] = True` e `app.run(debug=True)`                                                                               | Modo debug expõe stack traces completos e permite execução de código arbitrário via console Werkzeug.            |
+| 9  | **MEDIUM**   | `models.py:175-230`                             | **N+1 Query Problem** — `get_pedidos_usuario` e `get_todos_pedidos` fazem queries dentro de loops (cursor2, cursor3)                                              | Para N pedidos, são executadas N×M queries adicionais. Performance degrada exponencialmente.                        |
+| 10 | **MEDIUM**   | `controllers.py:30-60 vs 70-95`                 | **Duplicação de código** — Validações de `criar_produto` repetidas em `atualizar_produto`                                                                    | Viola DRY. Mudanças precisam ser feitas em múltiplos lugares.                                                       |
+| 11 | **MEDIUM**   | `controllers.py` (vários)                      | **Exceções genéricas expostas** — `except Exception as e: return jsonify({"erro": str(e)})`                                                                      | Expõe mensagens de erro internas (stack traces, paths) para o cliente.                                               |
+| 12 | **LOW**      | `controllers.py:6, models.py:todo`              | **Print statements como logging** — Uso de `print()` em vez de módulo `logging`                                                                                  | Sem níveis de log, sem rotação, sem formato estruturado. Difícil depurar em produção.                           |
+| 13 | **LOW**      | `models.py:2`                                   | **Import não utilizado** — `import sqlite3` (usa `get_db` do database.py)                                                                                        | Código morto que polui o namespace.                                                                                  |
+| 14 | **LOW**      | `controllers.py:55-56`                          | **Magic numbers** — `len(nome) < 2`, `len(nome) > 200` sem constantes nomeadas                                                                                    | Dificulta manutenção. Se o limite mudar, precisa caçar todos os lugares.                                           |
 
 **Resumo:** 4 CRITICAL · 4 HIGH · 3 MEDIUM · 3 LOW = **14 findings**
 
@@ -45,19 +45,19 @@ Análise detalhada dos 3 projetos-alvo, identificando problemas de arquitetura, 
 **Arquitetura atual:** Monolito com God Class — 3 arquivos, `AppManager.js` concentra tudo
 **Domínio:** LMS (Learning Management System) com fluxo de checkout/pagamento
 
-| #   | Severidade   | Arquivo:Linha           | Problema                                                                                                                              | Justificativa                                                                                |
-| --- | ------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| 1   | **CRITICAL** | `utils.js:2-5`          | **Credenciais hardcoded** — `dbPass: "senha_super_secreta_prod_123"`, `paymentGatewayKey: "pk_live_..."`, credenciais SMTP            | Múltiplas credenciais de produção expostas no código. Se o repo for público, é catastrófico. |
-| 2   | **CRITICAL** | `AppManager.js:48`      | **Log de dados de cartão de crédito** — `console.log(\`Processando cartão ${cc}...\`)` loga número completo do cartão                 | Viola PCI-DSS. Dados de cartão NUNCA devem ser logados.                                      |
-| 3   | **CRITICAL** | `AppManager.js:1-130`   | **God Class** — `AppManager` contém init de banco, definição de rotas, lógica de checkout, relatórios financeiros, tudo em uma classe | Viola SRP completamente. 130 linhas com 4 responsabilidades distintas.                       |
-| 4   | **HIGH**     | `utils.js:17-22`        | **Criptografia caseira (badCrypto)** — Função que faz loop 10000x concatenando base64 em vez de usar bcrypt/argon2                    | Hash frágil e previsível. Não usa salt. Fácil de quebrar com rainbow tables.                 |
-| 5   | **HIGH**     | `AppManager.js:18`      | **Senha em plaintext no seed** — `INSERT INTO users ... VALUES ('Leonan', ..., '123')`                                                | Senha '123' sem hash no banco. Usuário inicial vulnerável.                                   |
-| 6   | **HIGH**     | `utils.js:8-9`          | **Estado global mutável** — `globalCache` e `totalRevenue` como variáveis globais                                                     | Viola imutabilidade e torna o comportamento imprevisível entre requisições.                  |
-| 7   | **MEDIUM**   | `AppManager.js:78-115`  | **Callback Hell + N+1 Query** — Relatório financeiro com 4 níveis de callbacks aninhados e queries em loops                           | Código ilegível e performance péssima. Para N cursos com M matrículas, são O(N×M) queries.   |
-| 8   | **MEDIUM**   | `AppManager.js:120-124` | **Cascade delete ausente** — Ao deletar usuário, matrículas e pagamentos ficam órfãos no banco                                        | Inconsistência de dados. Registros órfãos sem integridade referencial.                       |
-| 9   | **MEDIUM**   | `AppManager.js:49`      | **Validação de pagamento frágil** — `cc.startsWith("4")` como "validação" de cartão                                                   | Qualquer cartão começando com 4 (Visa) é aprovado. Nenhuma validação real.                   |
-| 10  | **LOW**      | `AppManager.js:35-39`   | **Nomes de variáveis ilegíveis** — `u`, `e`, `p`, `cid`, `cc`                                                                         | Variáveis de uma letra prejudicam legibilidade e manutenção.                                 |
-| 11  | **LOW**      | `AppManager.js:43,122`  | **Mensagens misturando idiomas** — "Bad Request", "Curso não encontrado", "Erro DB"                                                   | Inconsistência de i18n. Mistura português e inglês.                                          |
+| #  | Severidade         | Arquivo:Linha             | Problema                                                                                                                                            | Justificativa                                                                                       |
+| -- | ------------------ | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 1  | **CRITICAL** | `utils.js:2-5`          | **Credenciais hardcoded** — `dbPass: "senha_super_secreta_prod_123"`, `paymentGatewayKey: "pk_live_..."`, credenciais SMTP               | Múltiplas credenciais de produção expostas no código. Se o repo for público, é catastrófico. |
+| 2  | **CRITICAL** | `AppManager.js:48`      | **Log de dados de cartão de crédito** — `console.log(\`Processando cartão ${cc}...\`)` loga número completo do cartão                 | Viola PCI-DSS. Dados de cartão NUNCA devem ser logados.                                            |
+| 3  | **CRITICAL** | `AppManager.js:1-130`   | **God Class** — `AppManager` contém init de banco, definição de rotas, lógica de checkout, relatórios financeiros, tudo em uma classe | Viola SRP completamente. 130 linhas com 4 responsabilidades distintas.                              |
+| 4  | **HIGH**     | `utils.js:17-22`        | **Criptografia caseira (badCrypto)** — Função que faz loop 10000x concatenando base64 em vez de usar bcrypt/argon2                         | Hash frágil e previsível. Não usa salt. Fácil de quebrar com rainbow tables.                    |
+| 5  | **HIGH**     | `AppManager.js:18`      | **Senha em plaintext no seed** — `INSERT INTO users ... VALUES ('Leonan', ..., '123')`                                                     | Senha '123' sem hash no banco. Usuário inicial vulnerável.                                        |
+| 6  | **HIGH**     | `utils.js:8-9`          | **Estado global mutável** — `globalCache` e `totalRevenue` como variáveis globais                                                      | Viola imutabilidade e torna o comportamento imprevisível entre requisições.                      |
+| 7  | **MEDIUM**   | `AppManager.js:78-115`  | **Callback Hell + N+1 Query** — Relatório financeiro com 4 níveis de callbacks aninhados e queries em loops                                | Código ilegível e performance péssima. Para N cursos com M matrículas, são O(N×M) queries.    |
+| 8  | **MEDIUM**   | `AppManager.js:120-124` | **Cascade delete ausente** — Ao deletar usuário, matrículas e pagamentos ficam órfãos no banco                                           | Inconsistência de dados. Registros órfãos sem integridade referencial.                           |
+| 9  | **MEDIUM**   | `AppManager.js:49`      | **Validação de pagamento frágil** — `cc.startsWith("4")` como "validação" de cartão                                                  | Qualquer cartão começando com 4 (Visa) é aprovado. Nenhuma validação real.                     |
+| 10 | **LOW**      | `AppManager.js:35-39`   | **Nomes de variáveis ilegíveis** — `u`, `e`, `p`, `cid`, `cc`                                                                    | Variáveis de uma letra prejudicam legibilidade e manutenção.                                     |
+| 11 | **LOW**      | `AppManager.js:43,122`  | **Mensagens misturando idiomas** — "Bad Request", "Curso não encontrado", "Erro DB"                                                         | Inconsistência de i18n. Mistura português e inglês.                                              |
 
 **Resumo:** 3 CRITICAL · 3 HIGH · 3 MEDIUM · 2 LOW = **11 findings**
 
@@ -69,20 +69,20 @@ Análise detalhada dos 3 projetos-alvo, identificando problemas de arquitetura, 
 **Arquitetura atual:** Parcialmente organizada — já possui `models/`, `routes/`, `services/`, `utils/`
 **Domínio:** Gerenciador de tarefas com usuários, categorias e relatórios
 
-| #   | Severidade   | Arquivo:Linha                                                                                          | Problema                                                                                                                                      | Justificativa                                                                          |
-| --- | ------------ | ------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| 1   | **CRITICAL** | `models/user.py:30-33`                                                                                 | **MD5 para hash de senhas** — `hashlib.md5(pwd.encode()).hexdigest()`                                                                         | MD5 é criptograficamente quebrado desde 2004. Deveria usar bcrypt, scrypt ou argon2.   |
-| 2   | **CRITICAL** | `services/notification_service.py:8-11`                                                                | **Credenciais SMTP hardcoded** — Email e senha do servidor de email no código                                                                 | Credenciais de serviço externo expostas. Permite envio de email como o sistema.        |
-| 3   | **HIGH**     | `models/user.py:18-27`                                                                                 | **Senha exposta no `to_dict()`** — O método retorna o campo `password` (mesmo hasheado)                                                       | Expor o hash da senha na API é uma vulnerabilidade. Facilita ataques offline.          |
-| 4   | **HIGH**     | `routes/task_routes.py`, `routes/user_routes.py`                                                       | **Lógica de negócio nas rotas** — Validações, regras de overdue, formatação estão nos route handlers                                          | Viola MVC. Rotas devem apenas receber requisições e delegar para services/controllers. |
-| 5   | **HIGH**     | `routes/user_routes.py:213`                                                                            | **Fake JWT token** — `'token': 'fake-jwt-token-' + str(user.id)`                                                                              | Token falso sem assinatura criptográfica. Qualquer um pode forjar tokens.              |
-| 6   | **MEDIUM**   | `routes/task_routes.py:30-45, 75-85`, `routes/user_routes.py:170-185`, `routes/report_routes.py:40-50` | **Duplicação de lógica de overdue** — A mesma lógica `if due_date < utcnow()` repetida em 4 lugares                                           | Viola DRY. Se a regra de overdue mudar, precisa alterar em 4 arquivos diferentes.      |
-| 7   | **MEDIUM**   | `routes/report_routes.py:68-80`                                                                        | **N+1 Query nos relatórios** — Loop sobre usuários fazendo queries adicionais para tasks                                                      | Para N usuários, são N+1 queries. Degradação de performance com escala.                |
-| 8   | **MEDIUM**   | `utils/helpers.py` vs `routes/`                                                                        | **Utils definidas mas não utilizadas** — `process_task_data`, `validate_email`, `sanitize_string` existem mas as rotas reimplementam a lógica | Código morto e duplicação. As funções utilitárias foram criadas mas ninguém as usa.    |
-| 9   | **MEDIUM**   | `routes/task_routes.py:6`                                                                              | **Imports não utilizados** — `import json, os, sys, time`                                                                                     | Polui o namespace e confunde sobre dependências reais.                                 |
-| 10  | **LOW**      | `seed.py:20,26,32`                                                                                     | **Senhas fracas no seed** — `'1234'`, `'abcd'`, `'pass'`                                                                                      | Dados de exemplo com senhas triviais. Em produção, isso seria um problema.             |
-| 11  | **LOW**      | `routes/task_routes.py:20-55`                                                                          | **Lógica de serialização manual** — Monta dicionário campo a campo em vez de usar `to_dict()` do model                                        | Duplica a lógica de serialização que já existe no modelo.                              |
-| 12  | **LOW**      | `app.py:6`                                                                                             | **Imports não utilizados** — `import os, sys, json, datetime` (datetime é usado, os outros não)                                               | Código morto.                                                                          |
+| #  | Severidade         | Arquivo:Linha                                                                                                | Problema                                                                                                                                                     | Justificativa                                                                              |
+| -- | ------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 1  | **CRITICAL** | `models/user.py:30-33`                                                                                     | **MD5 para hash de senhas** — `hashlib.md5(pwd.encode()).hexdigest()`                                                                               | MD5 é criptograficamente quebrado desde 2004. Deveria usar bcrypt, scrypt ou argon2.      |
+| 2  | **CRITICAL** | `services/notification_service.py:8-11`                                                                    | **Credenciais SMTP hardcoded** — Email e senha do servidor de email no código                                                                        | Credenciais de serviço externo expostas. Permite envio de email como o sistema.           |
+| 3  | **HIGH**     | `models/user.py:18-27`                                                                                     | **Senha exposta no `to_dict()`** — O método retorna o campo `password` (mesmo hasheado)                                                          | Expor o hash da senha na API é uma vulnerabilidade. Facilita ataques offline.             |
+| 4  | **HIGH**     | `routes/task_routes.py`, `routes/user_routes.py`                                                         | **Lógica de negócio nas rotas** — Validações, regras de overdue, formatação estão nos route handlers                                           | Viola MVC. Rotas devem apenas receber requisições e delegar para services/controllers.   |
+| 5  | **HIGH**     | `routes/user_routes.py:213`                                                                                | **Fake JWT token** — `'token': 'fake-jwt-token-' + str(user.id)`                                                                                    | Token falso sem assinatura criptográfica. Qualquer um pode forjar tokens.                 |
+| 6  | **MEDIUM**   | `routes/task_routes.py:30-45, 75-85`, `routes/user_routes.py:170-185`, `routes/report_routes.py:40-50` | **Duplicação de lógica de overdue** — A mesma lógica `if due_date < utcnow()` repetida em 4 lugares                                             | Viola DRY. Se a regra de overdue mudar, precisa alterar em 4 arquivos diferentes.          |
+| 7  | **MEDIUM**   | `routes/report_routes.py:68-80`                                                                            | **N+1 Query nos relatórios** — Loop sobre usuários fazendo queries adicionais para tasks                                                            | Para N usuários, são N+1 queries. Degradação de performance com escala.                |
+| 8  | **MEDIUM**   | `utils/helpers.py` vs `routes/`                                                                          | **Utils definidas mas não utilizadas** — `process_task_data`, `validate_email`, `sanitize_string` existem mas as rotas reimplementam a lógica | Código morto e duplicação. As funções utilitárias foram criadas mas ninguém as usa. |
+| 9  | **MEDIUM**   | `routes/task_routes.py:6`                                                                                  | **Imports não utilizados** — `import json, os, sys, time`                                                                                          | Polui o namespace e confunde sobre dependências reais.                                    |
+| 10 | **LOW**      | `seed.py:20,26,32`                                                                                         | **Senhas fracas no seed** — `'1234'`, `'abcd'`, `'pass'`                                                                                        | Dados de exemplo com senhas triviais. Em produção, isso seria um problema.               |
+| 11 | **LOW**      | `routes/task_routes.py:20-55`                                                                              | **Lógica de serialização manual** — Monta dicionário campo a campo em vez de usar `to_dict()` do model                                          | Duplica a lógica de serialização que já existe no modelo.                              |
+| 12 | **LOW**      | `app.py:6`                                                                                                 | **Imports não utilizados** — `import os, sys, json, datetime` (datetime é usado, os outros não)                                                  | Código morto.                                                                             |
 
 **Resumo:** 2 CRITICAL · 3 HIGH · 4 MEDIUM · 3 LOW = **12 findings**
 
@@ -90,8 +90,8 @@ Análise detalhada dos 3 projetos-alvo, identificando problemas de arquitetura, 
 
 ### Comparativo entre projetos
 
-| Projeto              | Stack           | Arquivos | CRITICAL | HIGH | MEDIUM | LOW | Total  |
-| -------------------- | --------------- | -------- | -------- | ---- | ------ | --- | ------ |
+| Projeto              | Stack           | Arquivos | CRITICAL | HIGH | MEDIUM | LOW | Total        |
+| -------------------- | --------------- | -------- | -------- | ---- | ------ | --- | ------------ |
 | code-smells-project  | Python/Flask    | 4        | 4        | 4    | 3      | 3   | **14** |
 | ecommerce-api-legacy | Node.js/Express | 3        | 3        | 3    | 3      | 2   | **11** |
 | task-manager-api     | Python/Flask    | 12       | 2        | 3    | 4      | 3   | **12** |
@@ -141,13 +141,13 @@ Seguindo a especificação do Codex, o `SKILL.md` inclui frontmatter YAML com `n
 
 **3. 5 arquivos de referência cobrindo as 5 áreas obrigatórias**
 
-| Arquivo                    | Área                      | Conteúdo                                                                             |
-| -------------------------- | ------------------------- | ------------------------------------------------------------------------------------ |
+| Arquivo                      | Área                      | Conteúdo                                                                              |
+| ---------------------------- | -------------------------- | -------------------------------------------------------------------------------------- |
 | `project-analysis.md`      | Análise de projeto        | Heurísticas para detectar 8+ linguagens, frameworks, bancos e padrões de arquitetura |
-| `anti-patterns-catalog.md` | Catálogo de anti-patterns | 21 anti-patterns com sinais de detecção, severidade e recomendações                  |
+| `anti-patterns-catalog.md` | Catálogo de anti-patterns | 21 anti-patterns com sinais de detecção, severidade e recomendações                |
 | `report-template.md`       | Template de relatório     | Formato exato do output da Fase 2 com regras de ordenação e exemplos                 |
-| `mvc-guidelines.md`        | Guidelines de arquitetura | Definição das 6 camadas MVC com exemplos Python e Node.js                            |
-| `refactoring-playbook.md`  | Playbook de refatoração   | 12 padrões de transformação com código antes/depois em Python e JavaScript           |
+| `mvc-guidelines.md`        | Guidelines de arquitetura  | Definição das 6 camadas MVC com exemplos Python e Node.js                            |
+| `refactoring-playbook.md`  | Playbook de refatoração  | 12 padrões de transformação com código antes/depois em Python e JavaScript         |
 
 **4. Agnosticismo de tecnologia**
 
@@ -160,48 +160,48 @@ A skill é agnóstica por design:
 
 ### Anti-Patterns Incluídos no Catálogo
 
-| #   | ID     | Nome                                 | Severidade |
-| --- | ------ | ------------------------------------ | ---------- |
-| 1   | AP-001 | SQL Injection                        | CRITICAL   |
-| 2   | AP-002 | Hardcoded Credentials / Secrets      | CRITICAL   |
-| 3   | AP-003 | God Class / God Module               | CRITICAL   |
-| 4   | AP-004 | Plaintext Password Storage           | CRITICAL   |
-| 5   | AP-005 | Weak Cryptographic Hashing           | CRITICAL   |
-| 6   | AP-006 | Logging Sensitive Data               | CRITICAL   |
-| 7   | AP-007 | Business Logic in Routes/Controllers | HIGH       |
-| 8   | AP-008 | Debug Mode in Production             | HIGH       |
-| 9   | AP-009 | Global Mutable State                 | HIGH       |
-| 10  | AP-010 | Missing Authentication / Fake Auth   | HIGH       |
-| 11  | AP-011 | Information Leakage in Responses     | HIGH       |
-| 12  | AP-012 | N+1 Query Problem                    | MEDIUM     |
-| 13  | AP-013 | Code Duplication                     | MEDIUM     |
-| 14  | AP-014 | Missing Cascade / Orphaned Records   | MEDIUM     |
-| 15  | AP-015 | Unused Code / Dead Code              | MEDIUM     |
-| 16  | AP-016 | Generic Exception Handling           | MEDIUM     |
-| 17  | AP-017 | Deprecated APIs                      | MEDIUM     |
-| 18  | AP-018 | Print Statements as Logging          | LOW        |
-| 19  | AP-019 | Magic Numbers / Magic Strings        | LOW        |
-| 20  | AP-020 | Poor Variable Naming                 | LOW        |
-| 21  | AP-021 | Missing Input Validation             | LOW        |
+| #  | ID     | Nome                                 | Severidade |
+| -- | ------ | ------------------------------------ | ---------- |
+| 1  | AP-001 | SQL Injection                        | CRITICAL   |
+| 2  | AP-002 | Hardcoded Credentials / Secrets      | CRITICAL   |
+| 3  | AP-003 | God Class / God Module               | CRITICAL   |
+| 4  | AP-004 | Plaintext Password Storage           | CRITICAL   |
+| 5  | AP-005 | Weak Cryptographic Hashing           | CRITICAL   |
+| 6  | AP-006 | Logging Sensitive Data               | CRITICAL   |
+| 7  | AP-007 | Business Logic in Routes/Controllers | HIGH       |
+| 8  | AP-008 | Debug Mode in Production             | HIGH       |
+| 9  | AP-009 | Global Mutable State                 | HIGH       |
+| 10 | AP-010 | Missing Authentication / Fake Auth   | HIGH       |
+| 11 | AP-011 | Information Leakage in Responses     | HIGH       |
+| 12 | AP-012 | N+1 Query Problem                    | MEDIUM     |
+| 13 | AP-013 | Code Duplication                     | MEDIUM     |
+| 14 | AP-014 | Missing Cascade / Orphaned Records   | MEDIUM     |
+| 15 | AP-015 | Unused Code / Dead Code              | MEDIUM     |
+| 16 | AP-016 | Generic Exception Handling           | MEDIUM     |
+| 17 | AP-017 | Deprecated APIs                      | MEDIUM     |
+| 18 | AP-018 | Print Statements as Logging          | LOW        |
+| 19 | AP-019 | Magic Numbers / Magic Strings        | LOW        |
+| 20 | AP-020 | Poor Variable Naming                 | LOW        |
+| 21 | AP-021 | Missing Input Validation             | LOW        |
 
 **Distribuição:** 6 CRITICAL · 5 HIGH · 6 MEDIUM · 4 LOW = **21 anti-patterns**
 
 ### Padrões de Transformação no Playbook
 
-| #   | Padrão                                           | Anti-Pattern   |
-| --- | ------------------------------------------------ | -------------- |
-| 1   | Fix SQL Injection → Parameterized Queries        | AP-001         |
-| 2   | Extract Hardcoded Config → Environment Variables | AP-002         |
-| 3   | Split God Class → Domain Models + Controllers    | AP-003         |
-| 4   | Hash Passwords Properly (bcrypt)                 | AP-004, AP-005 |
-| 5   | Move Business Logic from Routes → Controllers    | AP-007         |
-| 6   | Fix N+1 Queries → JOINs / Eager Loading          | AP-012         |
-| 7   | Centralize Error Handling                        | AP-016         |
-| 8   | Replace Print/Console.log → Structured Logging   | AP-018         |
-| 9   | Extract Magic Numbers → Named Constants          | AP-019         |
-| 10  | Remove Sensitive Data from API Responses         | AP-011         |
-| 11  | Fix Deprecated APIs                              | AP-017         |
-| 12  | Add Input Validation Layer                       | AP-021         |
+| #  | Padrão                                           | Anti-Pattern   |
+| -- | ------------------------------------------------- | -------------- |
+| 1  | Fix SQL Injection → Parameterized Queries        | AP-001         |
+| 2  | Extract Hardcoded Config → Environment Variables | AP-002         |
+| 3  | Split God Class → Domain Models + Controllers    | AP-003         |
+| 4  | Hash Passwords Properly (bcrypt)                  | AP-004, AP-005 |
+| 5  | Move Business Logic from Routes → Controllers    | AP-007         |
+| 6  | Fix N+1 Queries → JOINs / Eager Loading          | AP-012         |
+| 7  | Centralize Error Handling                         | AP-016         |
+| 8  | Replace Print/Console.log → Structured Logging   | AP-018         |
+| 9  | Extract Magic Numbers → Named Constants          | AP-019         |
+| 10 | Remove Sensitive Data from API Responses          | AP-011         |
+| 11 | Fix Deprecated APIs                               | AP-017         |
+| 12 | Add Input Validation Layer                        | AP-021         |
 
 ### Desafios e Soluções
 

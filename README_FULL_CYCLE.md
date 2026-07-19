@@ -158,13 +158,13 @@ Criar a skill dentro do projeto `code-smells-project/` e implementar o SKILL.md 
 
 Criar arquivos de referência em Markdown que forneçam à skill o conhecimento necessário para executar as 3 fases. Os arquivos devem cobrir **obrigatoriamente** as seguintes áreas de conhecimento:
 
-| Área de conhecimento      | O que deve conter                                                                                     |
-| ------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Análise de projeto        | Heurísticas para detecção de linguagem, framework, banco de dados e mapeamento de arquitetura         |
-| Catálogo de anti-patterns | Anti-patterns com sinais de detecção e classificação de severidade                                    |
+| Área de conhecimento      | O que deve conter                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Análise de projeto        | Heurísticas para detecção de linguagem, framework, banco de dados e mapeamento de arquitetura       |
+| Catálogo de anti-patterns | Anti-patterns com sinais de detecção e classificação de severidade                                 |
 | Template de relatório     | Formato padronizado do relatório de auditoria (Fase 2)                                                |
-| Guidelines de arquitetura | Regras do padrão MVC alvo (camadas Models, Views/Routes e Controllers, responsabilidades de cada uma) |
-| Playbook de refatoração   | Padrões concretos de transformação para cada anti-pattern (com exemplos de código)                    |
+| Guidelines de arquitetura  | Regras do padrão MVC alvo (camadas Models, Views/Routes e Controllers, responsabilidades de cada uma) |
+| Playbook de refatoração  | Padrões concretos de transformação para cada anti-pattern (com exemplos de código)                 |
 
 > **Nota:** Você tem liberdade para organizar os arquivos de referência como preferir — pode usar os nomes e a quantidade de arquivos que fizer sentido para sua skill. O importante é que todas as 5 áreas de conhecimento estejam cobertas. O nome da skill (`refactor-arch`) e o arquivo `SKILL.md` são obrigatórios e não devem ser alterados. O path da skill segue a convenção da ferramenta escolhida (no Claude Code, por exemplo, é `.claude/skills/refactor-arch/`).
 
@@ -419,12 +419,12 @@ Se a skill não detectou problemas suficientes ou a refatoração falhou, ajuste
 
 A skill deve atingir os seguintes mínimos em **todos os 3 projetos**:
 
-| Critério                                    | Requisito                  |
-| ------------------------------------------- | -------------------------- |
-| Fase 1 detecta stack corretamente           | OBRIGATÓRIO (3/3 projetos) |
-| Fase 2 encontra >= 5 findings               | OBRIGATÓRIO (3/3 projetos) |
-| Fase 2 inclui pelo menos 1 CRITICAL ou HIGH | OBRIGATÓRIO (3/3 projetos) |
-| Fase 3 aplicação funciona após refatoração  | OBRIGATÓRIO (3/3 projetos) |
+| Critério                                       | Requisito                   |
+| ----------------------------------------------- | --------------------------- |
+| Fase 1 detecta stack corretamente               | OBRIGATÓRIO (3/3 projetos) |
+| Fase 2 encontra >= 5 findings                   | OBRIGATÓRIO (3/3 projetos) |
+| Fase 2 inclui pelo menos 1 CRITICAL ou HIGH     | OBRIGATÓRIO (3/3 projetos) |
+| Fase 3 aplicação funciona após refatoração | OBRIGATÓRIO (3/3 projetos) |
 
 **IMPORTANTE:** Todos os critérios devem ser atingidos nos 3 projetos, não apenas em um!
 

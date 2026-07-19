@@ -16,6 +16,7 @@ You are an expert software architect specializing in refactoring legacy codebase
 ### Step 1.1: Detect Stack
 
 Read these files to determine the technology stack:
+
 - `requirements.txt`, `Pipfile`, `pyproject.toml`, `setup.py` → Python
 - `package.json` → Node.js/JavaScript/TypeScript
 - `Gemfile` → Ruby
@@ -26,6 +27,7 @@ Read these files to determine the technology stack:
 - `*.csproj` → C#/.NET
 
 For the framework, look at:
+
 - Python: `Flask` (from flask import...), `Django` (django), `FastAPI` (fastapi)
 - Node.js: `Express` (require('express')), `Koa`, `Fastify`, `NestJS`
 - Ruby: `Rails`, `Sinatra`
@@ -33,6 +35,7 @@ For the framework, look at:
 - Java: `Spring Boot`, `Jakarta EE`
 
 For the database, look at:
+
 - `sqlite3`, `sqlite` → SQLite
 - `psycopg2`, `pg` → PostgreSQL
 - `pymysql`, `mysql2`, `mysql` → MySQL
@@ -42,6 +45,7 @@ For the database, look at:
 ### Step 1.2: Map Architecture
 
 Determine the current architecture pattern:
+
 - **Monolithic:** All code in 1-5 files, no folder separation
 - **Partially organized:** Has some folders (models/, routes/) but logic mixed
 - **Layered:** Clear separation but not MVC (e.g., routes + services only)
@@ -52,6 +56,7 @@ Count source files (exclude `node_modules`, `__pycache__`, `.git`, `venv`, `dist
 ### Step 1.3: Identify Domain
 
 Read route definitions, model names, and table names to infer the business domain:
+
 - Products, orders, users → E-commerce
 - Courses, enrollments, payments → LMS / Education
 - Tasks, users, categories → Task Management / Project Management
@@ -83,12 +88,14 @@ DB tables:     <list of tables/collections>
 ### Step 2.1: Load References
 
 Read these reference files for detection knowledge:
+
 - `references/anti-patterns-catalog.md` — What to look for
 - `references/report-template.md` — How to format output
 
 ### Step 2.2: Scan for Anti-Patterns
 
 For each anti-pattern in the catalog, scan ALL source files. For each finding, record:
+
 - **Severity:** CRITICAL, HIGH, MEDIUM, or LOW
 - **File:** Exact file path
 - **Line(s):** Exact line number or range
@@ -96,9 +103,19 @@ For each anti-pattern in the catalog, scan ALL source files. For each finding, r
 - **Impact:** Why it matters
 - **Recommendation:** How to fix it
 
-### Step 2.3: Generate Report
+### Step 2.3: Generate and Save Report
 
 Print the report following the template in `references/report-template.md`.
+
+**CRITICAL: After printing the report, you MUST save it to a file.** Create the directory `../reports/` (if it doesn't exist) at the repository root and write the full report to:
+
+```
+../reports/audit-project-1.md   # For project 1 (code-smells-project)
+../reports/audit-project-2.md   # For project 2 (ecommerce-api-legacy)
+../reports/audit-project-3.md   # For project 3 (task-manager-api)
+```
+
+The file must contain the COMPLETE report output — everything from `================================` to `Total: N findings ================================`.
 
 ### Step 2.4: Pause for Confirmation
 
@@ -119,6 +136,7 @@ Phase 2 complete. Proceed with refactoring (Phase 3)? [y/n]
 ### Step 3.1: Load References
 
 Read these reference files for refactoring knowledge:
+
 - `references/mvc-guidelines.md` — Target architecture rules
 - `references/refactoring-playbook.md` — Transformation patterns
 
@@ -127,6 +145,7 @@ Read these reference files for refactoring knowledge:
 Design the target MVC structure based on the project's language and framework:
 
 **For Python/Flask:**
+
 ```
 src/
 ├── config/
@@ -150,6 +169,7 @@ src/
 ```
 
 **For Node.js/Express:**
+
 ```
 src/
 ├── config/
@@ -177,6 +197,7 @@ Apply transformations from the playbook. For each finding from Phase 2:
 4. **LOW issues last** — Code quality
 
 Key transformations to apply:
+
 - Extract configuration to config module (use environment variables)
 - Separate models by domain entity
 - Move business logic from routes to controllers
@@ -187,7 +208,7 @@ Key transformations to apply:
 - Remove dead code and unused imports
 - Replace print() with proper logging
 
-### Step 3.4: Validate
+### Step 3.4: Validate and Save Results
 
 After refactoring, validate that the application still works:
 
@@ -214,15 +235,36 @@ PHASE 3: REFACTORING COMPLETE
 ================================
 ```
 
+**CRITICAL: After printing the validation results, you MUST save them to a file.** Append the Phase 3 results to the same report file created in Phase 2:
+
+```
+../reports/audit-project-1.md   # Append Phase 3 results to this file
+../reports/audit-project-2.md
+../reports/audit-project-3.md
+```
+
+The final report file must contain BOTH Phase 2 (audit findings) and Phase 3 (refactoring results + validation).
+
+**After saving the report, remind the user to commit the refactored code:**
+
+```
+================================
+NEXT STEP: Commit your changes
+================================
+Run: git add . && git commit -m "refactor: apply MVC architecture - Phase 3 complete"
+================================
+```
+
 ---
 
 ## CRITICAL RULES
 
 1. **NEVER modify files in Phase 1 or Phase 2** — only read and analyze
 2. **ALWAYS pause after Phase 2** — wait for user confirmation before Phase 3
-3. **ALWAYS validate after Phase 3** — boot the app and test endpoints
-4. **Be technology-agnostic** — adapt patterns to the detected language/framework
-5. **Preserve functionality** — the refactored app must behave identically to the original
-6. **Use parameterized queries** — never concatenate user input into SQL
-7. **Use environment variables** — never hardcode secrets or credentials
-8. **Follow the reference files** — they contain the detailed knowledge for each phase
+3. **ALWAYS save the audit report to `../reports/audit-project-<N>.md`** — Phase 2 findings AND Phase 3 results must be written to disk at the repository root
+4. **ALWAYS validate after Phase 3** — boot the app and test endpoints
+5. **Be technology-agnostic** — adapt patterns to the detected language/framework
+6. **Preserve functionality** — the refactored app must behave identically to the original
+7. **Use parameterized queries** — never concatenate user input into SQL
+8. **Use environment variables** — never hardcode secrets or credentials
+9. **Follow the reference files** — they contain the detailed knowledge for each phase

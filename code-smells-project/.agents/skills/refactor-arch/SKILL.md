@@ -103,9 +103,19 @@ For each anti-pattern in the catalog, scan ALL source files. For each finding, r
 - **Impact:** Why it matters
 - **Recommendation:** How to fix it
 
-### Step 2.3: Generate Report
+### Step 2.3: Generate and Save Report
 
 Print the report following the template in `references/report-template.md`.
+
+**CRITICAL: After printing the report, you MUST save it to a file.** Create the directory `../reports/` (if it doesn't exist) at the repository root and write the full report to:
+
+```
+../reports/audit-project-1.md   # For project 1 (code-smells-project)
+../reports/audit-project-2.md   # For project 2 (ecommerce-api-legacy)
+../reports/audit-project-3.md   # For project 3 (task-manager-api)
+```
+
+The file must contain the COMPLETE report output — everything from `================================` to `Total: N findings ================================`.
 
 ### Step 2.4: Pause for Confirmation
 
@@ -198,7 +208,7 @@ Key transformations to apply:
 - Remove dead code and unused imports
 - Replace print() with proper logging
 
-### Step 3.4: Validate
+### Step 3.4: Validate and Save Results
 
 After refactoring, validate that the application still works:
 
@@ -225,15 +235,36 @@ PHASE 3: REFACTORING COMPLETE
 ================================
 ```
 
+**CRITICAL: After printing the validation results, you MUST save them to a file.** Append the Phase 3 results to the same report file created in Phase 2:
+
+```
+../reports/audit-project-1.md   # Append Phase 3 results to this file
+../reports/audit-project-2.md
+../reports/audit-project-3.md
+```
+
+The final report file must contain BOTH Phase 2 (audit findings) and Phase 3 (refactoring results + validation).
+
+**After saving the report, remind the user to commit the refactored code:**
+
+```
+================================
+NEXT STEP: Commit your changes
+================================
+Run: git add . && git commit -m "refactor: apply MVC architecture - Phase 3 complete"
+================================
+```
+
 ---
 
 ## CRITICAL RULES
 
 1. **NEVER modify files in Phase 1 or Phase 2** — only read and analyze
 2. **ALWAYS pause after Phase 2** — wait for user confirmation before Phase 3
-3. **ALWAYS validate after Phase 3** — boot the app and test endpoints
-4. **Be technology-agnostic** — adapt patterns to the detected language/framework
-5. **Preserve functionality** — the refactored app must behave identically to the original
-6. **Use parameterized queries** — never concatenate user input into SQL
-7. **Use environment variables** — never hardcode secrets or credentials
-8. **Follow the reference files** — they contain the detailed knowledge for each phase
+3. **ALWAYS save the audit report to `../reports/audit-project-<N>.md`** — Phase 2 findings AND Phase 3 results must be written to disk at the repository root
+4. **ALWAYS validate after Phase 3** — boot the app and test endpoints
+5. **Be technology-agnostic** — adapt patterns to the detected language/framework
+6. **Preserve functionality** — the refactored app must behave identically to the original
+7. **Use parameterized queries** — never concatenate user input into SQL
+8. **Use environment variables** — never hardcode secrets or credentials
+9. **Follow the reference files** — they contain the detailed knowledge for each phase
