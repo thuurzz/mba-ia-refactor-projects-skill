@@ -225,7 +225,154 @@ Solução: A estrutura de diretórios foi adaptada de `.claude/skills/` para `.a
 
 ## C) Resultados
 
-_(a ser preenchido após a execução da skill nos 3 projetos)_
+### Resumo dos Relatórios de Auditoria
+
+| Projeto | Stack | Arquivos Originais | CRITICAL | HIGH | MEDIUM | LOW | **Total** |
+|---------|-------|-------------------|----------|------|--------|-----|-----------|
+| 1 — code-smells-project | Python/Flask 3.1.1 | 4 | 6 | 5 | 5 | 3 | **19** |
+| 2 — ecommerce-api-legacy | Node.js/Express 4.18 | 3 | 5 | 3 | 4 | 4 | **16** |
+| 3 — task-manager-api | Python/Flask 3.0 | 15 | 6 | 4 | 5 | 2 | **17** |
+
+**Total geral: 52 findings em 3 projetos**
+
+---
+
+### Projeto 1 — code-smells-project (Python/Flask)
+
+**Antes:** Monolito com 4 arquivos (~780 linhas) — `app.py`, `models.py`, `controllers.py`, `database.py`
+
+**Depois:** Estrutura MVC com 25 arquivos em `src/`
+
+```
+src/
+├── config/settings.py              # Config por env vars
+├── models/                         # product, user, order (domain-specific)
+├── controllers/                    # product, user, order, system
+├── routes/                         # product, user, order, system
+├── middlewares/error_handler.py    # Centralized error handling
+└── services/                       # auth, validation, notification
+```
+
+**Destaques da refatoração:**
+- SQL Injection corrigido → todas queries usam parâmetros `?`
+- Endpoint `/admin/query` (backdoor SQL) removido
+- `SECRET_KEY` extraída para `config/settings.py` via env vars
+- Senhas migradas para hash seguro (Werkzeug)
+- `debug=True` removido, servidor `waitress` em produção
+- Health check não vaza mais `secret_key`, `db_path`, `debug`
+- N+1 queries substituídas por JOINs
+- `print()` substituído por `logging`
+
+**Validação:**
+- ✅ App inicia sem erros (`python app.py`)
+- ✅ Todos os endpoints originais respondem (`/`, `/health`, `/produtos`, `/usuarios`, `/pedidos`, `/login`, `/relatorios/vendas`)
+- ✅ Zero anti-patterns restantes
+
+---
+
+### Projeto 2 — ecommerce-api-legacy (Node.js/Express)
+
+**Antes:** God Class com 3 arquivos (~183 linhas) — `app.js`, `AppManager.js`, `utils.js`
+
+**Depois:** Estrutura MVC com 24 arquivos em `src/`
+
+```
+src/
+├── config/                         # constants, database, index (env vars)
+├── models/                         # user, course, enrollment, payment, audit-log, report
+├── controllers/                    # checkout, admin, user
+├── routes/                         # checkout, admin, user
+├── middlewares/                    # errorHandler, auth (JWT), async-handler
+└── services/                       # password (scrypt), payment, logger, http-error
+```
+
+**Destaques da refatoração:**
+- Credenciais hardcoded (`dbPass`, `paymentGatewayKey`, SMTP) → env vars
+- Log de número de cartão completo removido (PCI-DSS)
+- `badCrypto` caseiro → `crypto.scryptSync` com salt
+- Senha `'123'` no seed → hash seguro
+- `globalCache` e `totalRevenue` (estado global) removidos
+- Callback hell + N+1 → JOIN único no relatório financeiro
+- Cascade delete implementado (FKs com `ON DELETE CASCADE`)
+- Admin routes protegidas com `x-admin-token`
+
+**Validação:**
+- ✅ App inicia sem erros
+- ✅ `POST /api/checkout` → 200 (Visa) / 400 (recusado)
+- ✅ `GET /api/admin/financial-report` → 200 com auth
+- ✅ `DELETE /api/users/1` → 200 com cascade cleanup
+- ✅ Zero anti-patterns restantes
+
+---
+
+### Projeto 3 — task-manager-api (Python/Flask)
+
+**Antes:** Parcialmente organizado com 15 arquivos (~1200 linhas) — `models/`, `routes/`, `services/`, `utils/`
+
+**Depois:** Estrutura MVC refinada com 35 arquivos em `src/`
+
+```
+src/
+├── config/settings.py
+├── controllers/                    # task, user, category, report
+├── models/                         # task, user, category
+├── routes/                         # task, user, category, report, system
+├── middlewares/                    # auth (JWT real), error_handler
+└── services/                       # auth, validation, serialization, notification, datetime, logging
+```
+
+**Destaques da refatoração:**
+- MD5 → Werkzeug (hash seguro com salt)
+- Senha removida do `to_dict()` (não vaza mais hash na API)
+- Fake JWT (`'fake-jwt-token-' + id`) → token real com assinatura + middleware
+- `datetime.utcnow()` → `datetime.now(UTC)` (API deprecated)
+- SMTP credentials → env vars
+- Lógica de overdue duplicada em 4 lugares → centralizada no controller
+- N+1 queries nos relatórios → eager loading / JOINs
+- `utils/helpers.py` não utilizado → removido, funções movidas para services
+- `print()` → `logging`
+
+**Validação:**
+- ✅ App inicia sem erros
+- ✅ Todos os endpoints originais respondem
+- ✅ Zero anti-patterns restantes
+
+---
+
+### Checklist de Validação
+
+| Critério | Proj 1 | Proj 2 | Proj 3 |
+|----------|:------:|:------:|:------:|
+| **Fase 1 — Análise** | | | |
+| Linguagem detectada corretamente | ✅ | ✅ | ✅ |
+| Framework detectado corretamente | ✅ | ✅ | ✅ |
+| Domínio descrito corretamente | ✅ | ✅ | ✅ |
+| Arquivos analisados condizem | ✅ | ✅ | ✅ |
+| **Fase 2 — Auditoria** | | | |
+| Relatório segue o template | ✅ | ✅ | ✅ |
+| Findings com arquivo e linha exatos | ✅ | ✅ | ✅ |
+| Ordenação CRITICAL → LOW | ✅ | ✅ | ✅ |
+| ≥ 5 findings | ✅ 19 | ✅ 16 | ✅ 17 |
+| APIs deprecated detectadas | ✅ | ✅ | ✅ |
+| Pausa e confirmação | ✅ | ✅ | ✅ |
+| **Fase 3 — Refatoração** | | | |
+| Estrutura MVC | ✅ | ✅ | ✅ |
+| Config extraída (sem hardcoded) | ✅ | ✅ | ✅ |
+| Models por domínio | ✅ | ✅ | ✅ |
+| Routes separadas | ✅ | ✅ | ✅ |
+| Controllers com lógica de negócio | ✅ | ✅ | ✅ |
+| Error handling centralizado | ✅ | ✅ | ✅ |
+| Entry point claro | ✅ | ✅ | ✅ |
+| App inicia sem erros | ✅ | ✅ | ✅ |
+| Endpoints originais respondem | ✅ | ✅ | ✅ |
+
+---
+
+### Observações sobre Stacks Diferentes
+
+- **Python/Flask (projetos 1 e 3):** A skill adaptou-se bem a ambos os níveis de organização — reestruturação completa no monolito e refinamento cirúrgico no projeto parcialmente organizado. No projeto 3, preservou a estrutura existente de `models/` e `routes/` enquanto adicionou `controllers/` e `middlewares/`.
+- **Node.js/Express (projeto 2):** A skill traduziu corretamente os padrões MVC para o ecossistema Node — models como classes com métodos estáticos, controllers async, middlewares Express, e serviços com injeção. O relatório usou terminologia JavaScript (callback hell, `console.log`, `process.env`).
+- **Ponto de atenção:** O Codex CLI requer `allow_implicit_invocation: true` no `agents/openai.yaml` para carregar a skill automaticamente. Com `false`, a skill é ignorada e o agente faz uma refatoração genérica sem seguir as 3 fases.
 
 ---
 
